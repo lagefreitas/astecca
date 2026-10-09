@@ -1,19 +1,46 @@
-# Astecca
+# Astecca - Ambiente de Treinamento em Comunicação de Crise
 
-Extensão do Chrome para o ensino prático de Comunicação de Crise em Relações Públicas. MVP do TCC de Ana Caroliny (UFAL).
+Extensão do Chrome para o ensino prático de Comunicação de Crise em Relações Públicas. Esse MVP foi desenvolvido como produto de TCC da Ana Caroliny Mendes Cavalcante, graduanda do curso de Relações Públicas da Universidade Federal de Alagoas (UFAL), sob orientação do Prof. André Lage Freitas.
 
 O aluno assume o papel de profissional de RP de uma empresa fictícia. A simulação passa por três fases: pré-crise, crise e pós-crise. Ao longo da crise, ele escolhe a estratégia de resposta (SCCT), o porta-voz e a forma de distribuição. Além disso, responde a jornalistas com prazo, redige o comunicado oficial e desmente boatos gerados por IA. No fim, recebe uma avaliação por critério, com a teoria que sustenta cada nota.
 
 Plano completo: [`docs/PLANO-MVP.md`](docs/PLANO-MVP.md). Base teórica: [`docs/resumo-3-artigos-selecionados.md`](docs/resumo-3-artigos-selecionados.md).
 
+## Como baixar
+
+O Astecca está disponível em <https://github.com/lagefreitas/astecca>. Há duas formas de baixá-lo.
+
+**Opção 1: arquivo ZIP (mais simples, sem programas extras).**
+
+1. Acesse <https://github.com/lagefreitas/astecca>.
+2. Clique no botão verde **Code** e, em seguida, em **Download ZIP**.
+3. Descompacte o arquivo baixado. Ele cria a pasta `astecca-main`, que é a pasta usada na instalação.
+
+**Opção 2: git (para quem vai colaborar com o código).**
+
+```
+git clone https://github.com/lagefreitas/astecca.git
+```
+
+Esse comando cria a pasta `astecca`.
+
 ## Como instalar (modo desenvolvedor)
 
 1. Abra `chrome://extensions` no Chrome (versão 116 ou mais recente).
 2. Ative o **Modo do desenvolvedor**, no canto superior direito.
-3. Clique em **Carregar sem compactação** e selecione esta pasta (`astecca`).
+3. Clique em **Carregar sem compactação** e selecione a pasta baixada (`astecca-main`, na opção ZIP, ou `astecca`, na opção git). A pasta certa é a que contém o arquivo `manifest.json`.
 4. Fixe o ícone do Astecca na barra do Chrome e clique nele. O Astecca abre numa aba inteira. Se a aba já estiver aberta, o clique apenas volta para ela.
 
+Não apague nem mova a pasta depois de instalar, já que o Chrome carrega a extensão a partir dela.
+
 Não há etapa de build. Dessa forma, qualquer alteração nos arquivos aparece ao recarregar a extensão em `chrome://extensions`.
+
+## Como atualizar
+
+1. Baixe a versão nova: na opção ZIP, baixe e descompacte o arquivo de novo, substituindo a pasta antiga; na opção git, rode `git pull` dentro da pasta.
+2. Em `chrome://extensions`, clique no botão de recarregar do Astecca.
+
+As configurações, as chaves de API e as crises geradas ficam guardadas no Chrome. Por isso, elas continuam disponíveis depois da atualização, desde que a extensão não seja removida.
 
 ## Inteligência artificial (opcional)
 
