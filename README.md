@@ -93,3 +93,8 @@ A revisão de segurança, com prompt injection, XSS, chaves de API e privacidade
 ## Privacidade
 
 Os dados do aluno ficam no `chrome.storage.local` do próprio navegador. Quando a IA está ativa, somente os textos da simulação vão para o provedor escolhido, sem o nome do aluno.
+
+## Auxílio de IA
+
+- Esse MVP foi feito com auxílio da Claude Code, modelo Opus 5.5.
+- A preparação de prompts foi feita com auxílio do Geminie Notebook.
