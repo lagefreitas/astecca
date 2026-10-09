@@ -6,15 +6,18 @@ O aluno assume o papel de profissional de RP de uma empresa fictícia. A simula�
 
 Plano completo: [`docs/PLANO-MVP.md`](docs/PLANO-MVP.md). Base teórica: [`docs/resumo-3-artigos-selecionados.md`](docs/resumo-3-artigos-selecionados.md).
 
+Site do projeto: <https://lagefreitas.github.io/astecca/>
+
 ## Como baixar
 
 O Astecca está disponível em <https://github.com/lagefreitas/astecca>. Há duas formas de baixá-lo.
 
 **Opção 1: arquivo ZIP (mais simples, sem programas extras).**
 
-1. Acesse <https://github.com/lagefreitas/astecca>.
-2. Clique no botão verde **Code** e, em seguida, em **Download ZIP**.
-3. Descompacte o arquivo baixado. Ele cria a pasta `astecca-main`, que é a pasta usada na instalação.
+1. Baixe o ZIP pelo link direto <https://github.com/lagefreitas/astecca/archive/refs/heads/main.zip>. Outra forma é acessar o repositório e clicar em **Code › Download ZIP**.
+2. Descompacte o arquivo baixado. Ele cria a pasta `astecca-main`, que é a pasta usada na instalação.
+
+A instalação pela Chrome Web Store está prevista, mas ainda não disponível.
 
 **Opção 2: git (para quem vai colaborar com o código).**
 
