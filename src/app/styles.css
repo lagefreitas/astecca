@@ -259,3 +259,9 @@ details ul { margin: 0 0 12px; padding-left: 18px; font-size: 13px; color: var(-
   .colunas { grid-template-columns: 340px minmax(0, 1fr); align-items: start; }
   .coluna-lateral { position: sticky; top: 132px; }
 }
+
+/* Geração de crises com IA */
+.gerador { gap: 12px; }
+.grade-gerador { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; }
+@media (min-width: 561px) { .grade-gerador { grid-template-columns: 200px minmax(0, 1fr); } }
+.giro.pequeno { width: 16px; height: 16px; border-width: 2px; }

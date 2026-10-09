@@ -45,6 +45,8 @@ Cada cenário é um arquivo JSON em `src/scenarios/`. Os campos principais são:
 - `eventos`: posts, matérias, boatos e perguntas de jornalistas. O campo `t` é o segundo simulado em que o evento aparece, e `prazo_s` é o prazo do jornalista.
 - `reacoes`: posts usados no modo sem IA, conforme o desfecho (`boa`, `mista` ou `ruim`).
 
+Com a IA ativada, a tela inicial também mostra **Gerar nova crise com IA**. O aluno escolhe o grupo SCCT (ou "Aleatório") e, se quiser, o setor da empresa. A IA escreve o conteúdo, enquanto o código define as regras teóricas do cenário, como as estratégias adequadas a cada grupo. As crises geradas ficam salvas no navegador, marcadas como "Gerada por IA", e podem ser removidas.
+
 Para incluir um cenário novo, crie o arquivo e acrescente o `id` em `CATALOGO`, no arquivo `src/engine/scenarios.js`. Os testes verificam se todos os cenários são válidos.
 
 Os cenários "Falha no sistema de pagamentos" e "Boato gerado por IA sobre a marca" estão marcados como rascunho, e precisam de revisão de conteúdo.
@@ -56,6 +58,10 @@ Requer Node.js 18 ou mais recente.
 ```
 npm test
 ```
+
+## Segurança
+
+A revisão de segurança, com prompt injection, XSS, chaves de API e privacidade, está em [`docs/SEGURANCA.md`](docs/SEGURANCA.md).
 
 ## Privacidade
 

@@ -30,3 +30,4 @@ export async function salvar(chave, valor) {
 
 export const CHAVE_SESSAO = 'astecca:sessao';
 export const CHAVE_CONFIG = 'astecca:config';
+export const CHAVE_CENARIOS_IA = 'astecca:cenarios-ia';

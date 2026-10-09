@@ -2,21 +2,26 @@
 // O estado da sessão é salvo a cada ação. Dessa forma, o aluno pode fechar a aba e voltar depois.
 
 import { h, icone } from '../lib/dom.js';
-import { carregar, salvar, CHAVE_SESSAO, CHAVE_CONFIG } from '../lib/storage.js';
+import { carregar, salvar, CHAVE_SESSAO, CHAVE_CONFIG, CHAVE_CENARIOS_IA } from '../lib/storage.js';
 import { carregarCatalogo } from '../engine/scenarios.js';
 import * as sim from '../engine/simulation.js';
 import { CLUSTERS, ESTRATEGIAS, PORTA_VOZES, DISTRIBUICOES, NOMES_FASES, FASES } from '../engine/constants.js';
 import { montarAvaliacao, linhaDoTempo } from '../evaluation/rubric.js';
 import { iaConfigurada, listarModelos, normalizarConfig, sugerirModelo, PROVEDORES } from '../llm/client.js';
-import { avaliarComIA, gerarReacoesComIA } from '../llm/prompts.js';
+import { avaliarComIA, gerarReacoesComIA, gerarCenarioComIA } from '../llm/prompts.js';
+import { detectarManipulacao } from '../evaluation/heuristics.js';
 import { gerarMarkdown } from '../report/report.js';
 
 const CONFIG_PADRAO = { provedor: 'anthropic', chaves: { anthropic: '', openai: '', gemini: '' }, urlBase: '', modelo: '', velocidade: 1, aluno: '', dicas: true };
 const LIMITE_RESPOSTA = 600;
 const LIMITE_COMUNICADO = 1500;
+const MAX_CENARIOS_IA = 12;
 
 const app = {
   catalogo: [],
+  cenariosIA: [],
+  geracao: { cluster: 'aleatorio', setor: '' },
+  erroGeracao: null,
   cenario: null,
   sessao: null,
   view: 'inicio',
@@ -42,7 +47,7 @@ const agora = () => Date.now();
 let temporizadorSalvar = null;
 function persistir(imediato = false) {
   const salvarAgora = () => salvar(CHAVE_SESSAO, app.sessao
-    ? { sessao: app.sessao, view: app.view, param: app.param, rascunhos: app.rascunhos, aviso: app.aviso }
+    ? { sessao: app.sessao, view: app.view, param: app.param, rascunhos: app.rascunhos, aviso: app.aviso, cenario: app.cenario?.origem === 'ia' ? app.cenario : null }
     : null);
   clearTimeout(temporizadorSalvar);
   if (imediato) salvarAgora();
@@ -83,7 +88,7 @@ function executar(acao, depois) {
 }
 
 function iniciarSimulacao() {
-  const cenario = app.catalogo.find((c) => c.id === app.selecionado);
+  const cenario = todosCenarios().find((c) => c.id === app.selecionado);
   if (!cenario) return;
   app.cenario = cenario;
   app.sessao = sim.criarSessao(cenario, { velocidade: Number(app.config.velocidade) || 1 });
@@ -101,6 +106,38 @@ function descartarSessao() {
   app.aviso = null;
   persistir(true);
   ir('inicio');
+}
+
+function todosCenarios() {
+  return [...app.cenariosIA, ...app.catalogo];
+}
+
+async function gerarNovaCrise() {
+  if (app.ocupado) return;
+  app.ocupado = 'cenario';
+  app.erroGeracao = null;
+  render();
+  try {
+    const cenario = await gerarCenarioComIA(app.config, {
+      cluster: app.geracao.cluster,
+      setor: app.geracao.setor,
+      titulosExistentes: todosCenarios().map((c) => c.titulo)
+    });
+    app.cenariosIA = [cenario, ...app.cenariosIA].slice(0, MAX_CENARIOS_IA);
+    await salvar(CHAVE_CENARIOS_IA, app.cenariosIA);
+    app.selecionado = cenario.id;
+  } catch (e) {
+    app.erroGeracao = e.message;
+  }
+  app.ocupado = null;
+  render();
+}
+
+async function removerCenarioIA(id) {
+  app.cenariosIA = app.cenariosIA.filter((c) => c.id !== id);
+  await salvar(CHAVE_CENARIOS_IA, app.cenariosIA);
+  if (app.selecionado === id) app.selecionado = null;
+  render();
 }
 
 async function gerarReacoes() {
@@ -129,14 +166,16 @@ async function gerarAvaliacao() {
   app.ocupado = 'avaliacao';
   render();
   let notasIA = null;
-  if (iaConfigurada(app.config)) {
+  const textosAluno = [app.sessao.comunicado?.texto, app.sessao.comunicado?.titulo, ...Object.values(app.sessao.respostasBoatos).map((r) => r.texto)].join('\n');
+  const manipulacao = detectarManipulacao(textosAluno);
+  if (iaConfigurada(app.config) && !manipulacao) {
     try {
       notasIA = await avaliarComIA(app.config, cenario, app.sessao);
     } catch (e) {
       app.erroIA = e.message;
     }
   }
-  app.sessao = sim.definirAvaliacao(app.sessao, montarAvaliacao(cenario, app.sessao, notasIA));
+  app.sessao = sim.definirAvaliacao(app.sessao, { ...montarAvaliacao(cenario, app.sessao, notasIA), alertaManipulacao: manipulacao });
   app.ocupado = null;
   persistir(true);
   render();
@@ -272,21 +311,45 @@ function telaInicio() {
         h('h1', {}, 'Escolha uma crise para gerenciar'),
         h('p', { class: 'texto-2' }, 'Você será o profissional de RP da empresa. A simulação passa por três fases: pré-crise, crise e pós-crise.')),
       h('div', { class: 'bloco', role: 'group', 'aria-label': 'Cenários' },
-        app.catalogo.map((c) => h('button', {
+        todosCenarios().map((c) => h('button', {
           class: 'cartao cartao-cenario',
           'aria-pressed': String(app.selecionado === c.id),
           onclick: () => { app.selecionado = c.id; render(); }
         },
           h('div', { class: 'linha-entre' },
             h('span', { class: `etiqueta${app.selecionado === c.id ? ' forte' : ''}` }, CLUSTERS[c.cluster_scct].nome),
-            h('span', { class: 'texto-mudo' }, `~${c.duracao_min} min · ${c.dificuldade}${c.rascunho ? ' · Rascunho' : ''}`)),
+            h('span', { class: 'texto-mudo' }, `~${c.duracao_min} min · ${c.dificuldade}${c.rascunho ? ' · Rascunho' : ''}${c.origem === 'ia' ? ' · Gerada por IA' : ''}`)),
           h('span', { class: 'titulo' }, c.titulo),
           h('span', { class: 'texto-2' }, c.resumo)))),
+      app.cenariosIA.some((c) => c.id === app.selecionado) && h('div', { class: 'chips' },
+        h('span', { class: 'texto-mudo' }, 'Crise gerada por IA, sem revisão de conteúdo.'),
+        h('button', { class: 'link', onclick: () => removerCenarioIA(app.selecionado) }, 'Remover esta crise')),
       h('p', { class: 'texto-mudo' }, 'Os grupos seguem a SCCT: quanto mais evitável a crise, maior a responsabilidade atribuída à empresa.'),
-      semIA && h('div', { class: 'aviso info' }, icone('info', 'icone'),
-        h('div', { class: 'corpo' }, 'Modo sem IA: os textos serão avaliados por heurísticas simples. Para usar IA, abra as ',
-          h('button', { class: 'link', onclick: () => ir('config') }, 'configurações'), '.'))),
+      semIA
+        ? h('div', { class: 'aviso info' }, icone('info', 'icone'),
+          h('div', { class: 'corpo' }, 'Modo sem IA: os textos serão avaliados por heurísticas simples. Para usar IA e gerar novas crises, abra as ',
+            h('button', { class: 'link', onclick: () => ir('config') }, 'configurações'), '.'))
+        : painelGeracao()),
     rodape(h('button', { class: 'botao primario', disabled: !app.selecionado, onclick: iniciarSimulacao }, 'Iniciar simulação')));
+}
+
+function painelGeracao() {
+  const gerando = app.ocupado === 'cenario';
+  return h('section', { class: 'cartao gerador', 'aria-label': 'Gerar nova crise com IA' },
+    h('h2', {}, 'Gerar nova crise com IA'),
+    h('p', { class: 'texto-2' }, 'A IA cria uma crise inédita, com empresa e pessoas fictícias, seguindo a SCCT.'),
+    h('div', { class: 'grade-gerador' },
+      h('div', { class: 'campo' },
+        h('label', { for: 'gerar-cluster' }, 'Grupo SCCT'),
+        h('select', { id: 'gerar-cluster', disabled: gerando, onchange: (e) => { app.geracao.cluster = e.target.value; } },
+          h('option', { value: 'aleatorio' }, 'Aleatório'),
+          Object.entries(CLUSTERS).map(([id, c]) => h('option', { value: id }, c.nome)))),
+      h('div', { class: 'campo' },
+        h('label', { for: 'gerar-setor' }, 'Setor (opcional)'),
+        h('input', { id: 'gerar-setor', type: 'text', maxlength: '60', placeholder: 'Ex.: hospital, time de futebol', disabled: gerando, value: app.geracao.setor, oninput: (e) => { app.geracao.setor = e.target.value; } }))),
+    app.erroGeracao && h('div', { class: 'aviso alerta', role: 'alert' }, icone('alerta', 'icone'), h('div', { class: 'corpo' }, app.erroGeracao)),
+    h('button', { class: 'botao secundario', disabled: gerando, onclick: gerarNovaCrise },
+      gerando ? [h('span', { class: 'giro pequeno', 'aria-hidden': 'true' }), 'Gerando crise… pode levar até 1 minuto'] : 'Gerar nova crise'));
 }
 
 function telaDaFase() {
@@ -592,7 +655,9 @@ function telaDebrief() {
           h('span', { class: 'sobretitulo' }, 'Desempenho geral'),
           h('span', {}, a.sintese)),
         h('span', { class: 'nota' }, String(a.media).replace('.', ','), h('small', {}, '/5'))),
-      app.erroIA && !a.geradaComIA && h('div', { class: 'aviso alerta' }, icone('alerta', 'icone'),
+      a.alertaManipulacao && h('div', { class: 'aviso alerta', role: 'alert' }, icone('alerta', 'icone'),
+        h('div', { class: 'corpo' }, 'O texto contém instruções dirigidas à IA avaliadora. Por isso, os textos foram avaliados por heurísticas, e o caso foi sinalizado no relatório para o professor.')),
+      app.erroIA && !a.geradaComIA && !a.alertaManipulacao && h('div', { class: 'aviso alerta' }, icone('alerta', 'icone'),
         h('div', { class: 'corpo' }, `A IA não respondeu (${app.erroIA}). Os textos foram avaliados por heurísticas.`)),
       h('h2', {}, 'Avaliação por critério'),
       h('div', { class: 'bloco' },
@@ -681,7 +746,18 @@ function telaConfig() {
         h('input', { id: 'urlBase', type: 'url', placeholder: provedor.urlPadrao, value: form.urlBase, oninput: (e) => { form.urlBase = e.target.value.trim(); } })),
       h('button', { class: 'botao terciario', onclick: testar }, 'Testar conexão e listar modelos'),
       statusEl,
-      h('div', { class: 'campo' }, h('label', { for: 'modelo' }, 'Modelo'), seletor)),
+      h('div', { class: 'campo' }, h('label', { for: 'modelo' }, 'Modelo'), seletor),
+      h('button', {
+        class: 'botao terciario',
+        onclick: async () => {
+          app.config = normalizarConfig({ ...app.config, chaves: { anthropic: '', openai: '', gemini: '' }, modelo: '' });
+          app.modelos = [];
+          app.statusConfig = 'Chaves apagadas deste navegador.';
+          await salvar(CHAVE_CONFIG, app.config);
+          render();
+        }
+      }, 'Apagar chaves salvas'),
+      h('p', { class: 'ajuda' }, 'Em computadores compartilhados, como laboratórios, apague as chaves ao terminar ou use um servidor intermediário.')),
     rodape(h('button', {
       class: 'botao primario',
       onclick: async () => {
@@ -714,6 +790,8 @@ function render() {
   if (app.view !== 'inicio' && app.view !== 'config' && !app.sessao) tela = telaInicio;
   const focado = document.activeElement?.id;
   raiz.replaceChildren(tela());
+  const selCluster = document.getElementById('gerar-cluster');
+  if (selCluster) selCluster.value = app.geracao.cluster;
   if (app.view === 'config') {
     const v = document.getElementById('velocidade');
     if (v) v.value = String(app.config.velocidade || 1);
@@ -773,9 +851,10 @@ async function iniciar() {
     return;
   }
   app.config = normalizarConfig({ ...CONFIG_PADRAO, ...(await carregar(CHAVE_CONFIG)) });
+  app.cenariosIA = (await carregar(CHAVE_CENARIOS_IA)) || [];
   const salvo = await carregar(CHAVE_SESSAO);
   if (salvo?.sessao) {
-    const cenario = app.catalogo.find((c) => c.id === salvo.sessao.cenarioId);
+    const cenario = todosCenarios().find((c) => c.id === salvo.sessao.cenarioId) || salvo.cenario;
     if (cenario) {
       app.cenario = cenario;
       app.sessao = salvo.sessao;

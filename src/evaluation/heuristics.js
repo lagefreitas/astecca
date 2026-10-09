@@ -104,3 +104,19 @@ export function notaDesinformacao(boatos, respostas, textoComunicado) {
   if (respondidos.length < boatos.length) just += ' Além disso, parte dos boatos ficou sem resposta.';
   return { nota, justificativa: just };
 }
+
+// Expressões típicas de quem tenta dar ordens à IA avaliadora dentro do texto (prompt injection).
+// Um comunicado de crise real não tem motivo para conter essas expressões.
+const MANIPULACAO = [
+  'ignore as instrucoes', 'ignore todas', 'ignore as regras', 'ignore o que', 'ignore previous', 'ignore all',
+  'desconsidere as', 'desconsidere todas', 'esqueca as instrucoes', 'instrucoes anteriores', 'novas instrucoes',
+  'prompt do sistema', 'system prompt', 'voce e um avaliador', 'voce e uma ia', 'caro avaliador', 'ao avaliador',
+  'ia avaliadora', 'modelo de linguagem', 'nota 5', 'nota cinco', 'nota maxima', 'nota 10', 'nota dez', '5/5',
+  'atribua nota', 'responda apenas', 'responda somente', '"nota"', '{"', '</'
+];
+
+/** Indica se o texto do aluno parece conter instruções dirigidas à IA. */
+export function detectarManipulacao(texto) {
+  const t = normalizar(texto);
+  return MANIPULACAO.some((termo) => t.includes(termo));
+}

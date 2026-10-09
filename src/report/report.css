@@ -26,3 +26,4 @@ button { min-height: 44px; padding: 0 16px; border-radius: 10px; border: none; b
   .acoes { display: none; }
   h2, table, blockquote { break-inside: avoid-page; }
 }
+.alerta { margin: 12px 0 0; padding: 12px; border-radius: 8px; background: #FBEDE6; color: #8A2D08; font-weight: 600; }

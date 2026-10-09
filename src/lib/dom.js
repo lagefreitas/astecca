@@ -8,7 +8,7 @@ export function h(tag, atributos = {}, ...filhos) {
     if (v == null || v === false) continue;
     if (k.startsWith('on') && typeof v === 'function') el.addEventListener(k.slice(2).toLowerCase(), v);
     else if (k === 'class') el.className = v;
-    else if (k === 'svg') el.innerHTML = v; // apenas ícones fixos definidos neste arquivo
+    else if (k === 'svg') { if (Object.values(ICONES).includes(v)) el.innerHTML = v; } // só ícones fixos deste arquivo; nunca dados
     else if (k === 'value' || k === 'checked' || k === 'disabled') props[k] = v;
     else if (v === true) el.setAttribute(k, '');
     else el.setAttribute(k, v);

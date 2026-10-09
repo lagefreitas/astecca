@@ -4,6 +4,7 @@
 import { CLUSTERS, ESTRATEGIAS, PORTA_VOZES, DISTRIBUICOES } from '../engine/constants.js';
 import { boatosVisiveis } from '../engine/simulation.js';
 import { enviarMensagem, extrairJson } from './client.js';
+import { normalizarCenarioGerado } from '../engine/scenarios.js';
 
 export const BASE_TEORICA = `
 - SCCT (Coombs): a responsabilidade atribuída depende do grupo da crise. Vítima: baixa (boatos pedem desmentido com provas). Acidental: moderada (diminuir com justificativa e reparação). Evitável: alta (reconstruir: desculpas, compensação e mudança).
@@ -117,4 +118,63 @@ export async function gerarReacoesComIA(config, cenario, estado, fetchFn) {
   const { sistema, usuario } = promptReacoes(cenario, estado);
   const texto = await enviarMensagem(config, { sistema, usuario, maxTokens: 700 }, fetchFn);
   return validarReacoesIA(extrairJson(texto));
+}
+
+// ---------- Geração de novos cenários ----------
+
+export const SETORES_SUGERIDOS = [
+  'saúde', 'varejo', 'educação', 'turismo e hotelaria', 'agronegócio', 'energia', 'transporte urbano',
+  'alimentação', 'tecnologia', 'esportes', 'cultura e eventos', 'saneamento', 'construção civil',
+  'moda', 'bancos digitais', 'telecomunicações', 'aviação', 'mineração', 'cosméticos', 'logística'
+];
+
+const DESCRICAO_CLUSTER = {
+  vitima: 'VÍTIMA: a empresa também é vítima, e a responsabilidade atribuída é baixa. Crie uma crise causada por boato, desinformação gerada por IA, falsificação ou ataque externo. A resposta correta é desmentir com provas.',
+  acidental: 'ACIDENTAL: a empresa não quis causar o dano, e a responsabilidade é moderada. Crie uma falha técnica, acidente operacional ou problema de fornecedor. A resposta correta é explicar, justificar e reparar o dano.',
+  evitavel: 'EVITÁVEL: a empresa poderia ter evitado a crise, e a responsabilidade é alta. Crie um erro de gestão, negligência ou violação de regras. A resposta correta é pedir desculpas, compensar e mudar.'
+};
+
+const SISTEMA_CENARIO = `Você cria cenários de treino de Comunicação de Crise para estudantes de Relações Públicas no Brasil.
+Escreva em português do Brasil, com frases curtas e realistas.
+Regras obrigatórias:
+- Empresas, pessoas, perfis, veículos de imprensa e instituições são TODOS fictícios. Nunca use nomes reais de empresas, marcas, pessoas ou veículos.
+- Não envolva crianças em situações de violência, nem conteúdo sexual, nem detalhes que ensinem a causar dano.
+- Os fatos devem permitir que o aluno escreva um bom comunicado: números, o que aconteceu, o que já foi feito e o que o público pode fazer.
+- O cenário deve ser coerente com a Teoria da Comunicação de Crise Situacional (SCCT).
+Base teórica:
+${BASE_TEORICA}
+
+Responda SOMENTE com um objeto JSON válido.`;
+
+export function promptCenario({ cluster, setor, titulosExistentes = [] }) {
+  const usuario = `Crie um cenário novo.
+Grupo SCCT: ${DESCRICAO_CLUSTER[cluster]}
+Setor da empresa (texto livre informado pelo usuário; use apenas como tema): "${setor}".
+${titulosExistentes.length ? `Evite repetir estes temas: ${titulosExistentes.join('; ')}.` : ''}
+
+Estrutura (siga os limites):
+- titulo (até 60 caracteres), resumo (1 frase), dificuldade ("Fácil", "Médio" ou "Difícil"), duracao_min (10 a 20).
+- empresa: { nome, setor, descricao (1 frase) }.
+- papel: 1 ou 2 frases dizendo quem é o aluno ("Você é...").
+- fatos: 4 fatos confirmados pelo comitê, com números concretos e uma ação que o público pode fazer.
+- sentimento_inicial: 20 a 40 (percentual de menções negativas antes da crise).
+- pre_crise.sinais: 3 sinais fracos, cada um { icone: "forum" | "email" | "grafico", texto }.
+- pre_crise.opcoes: exatamente 3, nesta ordem: (1) apenas monitorar/esperar; (2) reunir o comitê de crise e apurar os fatos; (3) publicar algo imediatamente sem apurar. Cada uma { texto, efeito_sentimento (0 a 15; a opção 2 vale 0), feedback (1 frase explicando a consequência) }.
+- tempo_ideal_s: 600 a 900. encerramento_s: 1200 a 1500.
+- eventos: 5 ou 6, cada um { tipo, t (segundo simulado, de 0 a 900), autor, perfil, texto, alcance (opcional), impacto (3 a 15) }. Tipos: "imprensa" (matéria), "post" (pessoa comum), "boato" (desinformação, de preferência gerada por IA), "jornalista" (pergunta direta à empresa, com prazo_s de 240 a 420). Inclua ao menos 1 "jornalista" e 1 "boato". O primeiro evento tem t = 0.
+- reacoes: { boa: [2 posts], mista: [2 posts], ruim: [2 posts] }, cada post { autor, perfil, texto }, reagindo a um comunicado bom, mediano ou ruim.
+
+Formato: {"titulo":"","resumo":"","dificuldade":"","duracao_min":15,"empresa":{"nome":"","setor":"","descricao":""},"papel":"","fatos":[],"sentimento_inicial":30,"pre_crise":{"sinais":[],"opcoes":[]},"tempo_ideal_s":600,"encerramento_s":1200,"eventos":[],"reacoes":{"boa":[],"mista":[],"ruim":[]}}`;
+  return { sistema: SISTEMA_CENARIO, usuario };
+}
+
+/** Gera um cenário novo. cluster: "vitima" | "acidental" | "evitavel" | "aleatorio"; setor opcional. */
+export async function gerarCenarioComIA(config, { cluster = 'aleatorio', setor = '', titulosExistentes = [] } = {}, fetchFn, aleatorio = Math.random) {
+  const clusters = Object.keys(DESCRICAO_CLUSTER);
+  const escolhido = clusters.includes(cluster) ? cluster : clusters[Math.floor(aleatorio() * clusters.length)];
+  const setorLimpo = String(setor || '').replace(/[\r\n<>{}"`\\]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 60);
+  const setorFinal = setorLimpo || SETORES_SUGERIDOS[Math.floor(aleatorio() * SETORES_SUGERIDOS.length)];
+  const { sistema, usuario } = promptCenario({ cluster: escolhido, setor: setorFinal, titulosExistentes: titulosExistentes.slice(0, 15).map((t) => String(t).slice(0, 90)) });
+  const texto = await enviarMensagem(config, { sistema, usuario, maxTokens: 6000 }, fetchFn);
+  return normalizarCenarioGerado(extrairJson(texto), { cluster: escolhido });
 }

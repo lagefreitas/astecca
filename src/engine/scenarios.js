@@ -69,3 +69,99 @@ export async function carregarCenario(id) {
 export async function carregarCatalogo() {
   return Promise.all(CATALOGO.map(carregarCenario));
 }
+
+// ---------- Cenários gerados por IA ----------
+
+/** Regras da SCCT aplicadas a todo cenário gerado, para que a avaliação fique coerente com a teoria. */
+export const REGRAS_POR_CLUSTER = {
+  vitima: { adequadas: ['negar'], aceitaveis: ['reforcar'], portaVoz: { recomendado: ['rp', 'ceo'], aceitavel: [] } },
+  acidental: { adequadas: ['diminuir'], aceitaveis: ['reconstruir'], portaVoz: { recomendado: ['rp', 'ceo'], aceitavel: [] } },
+  evitavel: { adequadas: ['reconstruir'], aceitaveis: ['diminuir'], portaVoz: { recomendado: ['ceo'], aceitavel: ['rp'] } }
+};
+
+const limitarNum = (v, min, max, padrao) => {
+  const n = Number(v);
+  return Number.isFinite(n) ? Math.min(max, Math.max(min, Math.round(n))) : padrao;
+};
+const texto = (v, padrao = '') => (typeof v === 'string' ? v.trim() : padrao);
+const post = (p) => ({ autor: texto(p?.autor, '@publico').slice(0, 40), perfil: texto(p?.perfil, 'Público').slice(0, 40), texto: texto(p?.texto).slice(0, 280) });
+
+/**
+ * Ajusta o cenário devolvido pela IA ao formato do Astecca. A IA escreve o conteúdo,
+ * enquanto as regras teóricas (estratégias e porta-vozes por grupo SCCT) e os limites
+ * numéricos são definidos aqui. Lança erro se o resultado continuar inválido.
+ */
+export function normalizarCenarioGerado(bruto, { cluster, agora = Date.now() } = {}) {
+  const c = cluster in REGRAS_POR_CLUSTER ? cluster : (bruto?.cluster_scct in REGRAS_POR_CLUSTER ? bruto.cluster_scct : 'acidental');
+  const regras = REGRAS_POR_CLUSTER[c];
+  const pre = bruto?.pre_crise || {};
+  const idsPre = ['monitorar', 'comite', 'preventivo'];
+  const opcoes = (Array.isArray(pre.opcoes) ? pre.opcoes : []).slice(0, 3).map((o, i) => ({
+    id: idsPre[i],
+    texto: texto(o?.texto, idsPre[i]),
+    efeito_sentimento: limitarNum(o?.efeito_sentimento, 0, 15, i === 1 ? 0 : 8),
+    feedback: texto(o?.feedback)
+  }));
+  if (opcoes[1]) opcoes[1].efeito_sentimento = 0; // reunir o comitê é a opção recomendada
+
+  const eventos = (Array.isArray(bruto?.eventos) ? bruto.eventos : [])
+    .filter((e) => e && ['post', 'imprensa', 'boato', 'jornalista'].includes(e.tipo) && texto(e.texto))
+    .slice(0, 8)
+    .map((e) => ({
+      tipo: e.tipo,
+      t: limitarNum(e.t, 0, 1000, 0),
+      autor: texto(e.autor, '@perfil').slice(0, 40),
+      perfil: texto(e.perfil, 'Público').slice(0, 50),
+      texto: texto(e.texto).slice(0, 400),
+      ...(texto(e.alcance) ? { alcance: texto(e.alcance).slice(0, 80) } : {}),
+      ...(e.tipo === 'jornalista' ? { prazo_s: limitarNum(e.prazo_s, 180, 480, 300) } : {}),
+      impacto: limitarNum(e.impacto, 3, 15, 8)
+    }))
+    .sort((a, b) => a.t - b.t)
+    .map((e, i) => ({ id: `e${i + 1}`, ...e }));
+  if (eventos.length) eventos[0].t = 0; // a crise começa com o primeiro evento
+
+  const reacoes = {};
+  for (const d of ['boa', 'mista', 'ruim']) {
+    reacoes[d] = (Array.isArray(bruto?.reacoes?.[d]) ? bruto.reacoes[d] : []).slice(0, 3).map(post).filter((p) => p.texto);
+  }
+
+  const cenario = {
+    id: `ia-${agora.toString(36)}`,
+    origem: 'ia',
+    criadoEm: new Date(agora).toISOString(),
+    titulo: texto(bruto?.titulo, 'Crise gerada por IA').slice(0, 90),
+    resumo: texto(bruto?.resumo).slice(0, 220),
+    cluster_scct: c,
+    dificuldade: ['Fácil', 'Médio', 'Difícil'].includes(bruto?.dificuldade) ? bruto.dificuldade : 'Médio',
+    duracao_min: limitarNum(bruto?.duracao_min, 10, 25, 15),
+    rascunho: false,
+    empresa: {
+      nome: texto(bruto?.empresa?.nome, 'Empresa fictícia').slice(0, 60),
+      setor: texto(bruto?.empresa?.setor).slice(0, 60),
+      descricao: texto(bruto?.empresa?.descricao).slice(0, 220)
+    },
+    papel: texto(bruto?.papel).slice(0, 300),
+    fatos: (Array.isArray(bruto?.fatos) ? bruto.fatos : []).map((f) => texto(f)).filter(Boolean).slice(0, 6),
+    sentimento_inicial: limitarNum(bruto?.sentimento_inicial, 15, 45, 30),
+    pre_crise: {
+      sinais: (Array.isArray(pre.sinais) ? pre.sinais : []).slice(0, 4).map((s) => ({
+        icone: ['forum', 'email', 'grafico'].includes(s?.icone) ? s.icone : 'forum',
+        texto: texto(s?.texto)
+      })).filter((s) => s.texto),
+      opcoes,
+      opcao_recomendada: 'comite'
+    },
+    estrategias_adequadas: regras.adequadas,
+    estrategias_aceitaveis: regras.aceitaveis,
+    porta_voz: regras.portaVoz,
+    tempo_ideal_s: limitarNum(bruto?.tempo_ideal_s, 480, 900, 600),
+    encerramento_s: limitarNum(bruto?.encerramento_s, 1000, 1500, 1200),
+    eventos,
+    reacoes
+  };
+  const erros = validarCenario(cenario);
+  if (!eventos.some((e) => e.tipo === 'jornalista')) erros.push('o cenário precisa de ao menos uma pergunta de jornalista');
+  if (erros.length) throw new Error(`A IA gerou um cenário incompleto (${erros.slice(0, 3).join('; ')}). Tente de novo.`);
+  return cenario;
+}

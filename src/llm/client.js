@@ -37,21 +37,34 @@ export function normalizarConfig(config = {}) {
   return { ...resto, provedor, chaves };
 }
 
+function usaServidorProprio(c) {
+  return Boolean(c.urlBase) && c.urlBase.replace(/\/+$/, '') !== PROVEDORES[c.provedor].urlPadrao;
+}
+
+/**
+ * Chave enviada nas requisições. Com servidor intermediário, a chave do provedor NÃO é enviada:
+ * quem guarda a chave é o servidor. Isso evita entregar a chave a um endereço digitado por engano.
+ */
 function chaveAtual(config) {
   const c = normalizarConfig(config);
+  if (usaServidorProprio(c)) return '';
   return c.chaves[c.provedor] || '';
 }
 
 function base(config) {
   const c = normalizarConfig(config);
-  return (c.urlBase || PROVEDORES[c.provedor].urlPadrao).replace(/\/+$/, '');
+  const url = (c.urlBase || PROVEDORES[c.provedor].urlPadrao).replace(/\/+$/, '');
+  // exige HTTPS, exceto para testes locais
+  if (!/^https:\/\//i.test(url) && !/^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/i.test(url)) {
+    throw new Error('O servidor intermediário precisa usar HTTPS.');
+  }
+  return url;
 }
 
 export function iaConfigurada(config) {
   if (!config || !config.modelo) return false;
   const c = normalizarConfig(config);
-  const usaServidorProprio = c.urlBase && c.urlBase !== PROVEDORES[c.provedor].urlPadrao;
-  return Boolean(chaveAtual(c) || usaServidorProprio);
+  return Boolean(chaveAtual(c) || usaServidorProprio(c));
 }
 
 // ---------- Formatos de cada provedor ----------

@@ -15,7 +15,7 @@ async function iniciar() {
     raiz.replaceChildren(h('p', {}, 'Nenhum relatório disponível. Conclua uma simulação no Astecca.'));
     return;
   }
-  const c = await carregarCenario(s.cenarioId);
+  const c = salvo.cenario && salvo.cenario.id === s.cenarioId ? salvo.cenario : await carregarCenario(s.cenarioId);
   const a = s.avaliacao;
   const d = s.decisoes;
   const faixa = (n) => (n >= 4 ? 'bom' : n === 3 ? 'medio' : 'fraco');
@@ -28,6 +28,7 @@ async function iniciar() {
       config.aluno ? `Aluno(a): ${config.aluno} · ` : '',
       `${new Date(s.criadaEm || Date.now()).toLocaleString('pt-BR')} · ${c.empresa.nome} · Grupo SCCT: ${CLUSTERS[c.cluster_scct].nome}`),
     h('div', { class: 'nota-geral' }, h('strong', {}, `${String(a.media).replace('.', ',')}/5`), h('span', {}, a.sintese)),
+    a.alertaManipulacao && h('p', { class: 'alerta' }, 'Atenção, professor(a): o texto do aluno contém instruções dirigidas à IA avaliadora. Os textos foram avaliados por heurísticas.'),
     h('h2', {}, 'Decisões'),
     d ? h('ul', {},
       h('li', {}, `Estratégia: ${ESTRATEGIAS[d.estrategia].nome}`),

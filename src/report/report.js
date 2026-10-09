@@ -17,6 +17,10 @@ export function gerarMarkdown(cenario, estado, { aluno = '' } = {}) {
   linhas.push('');
   linhas.push(`> ${a.sintese}`);
   linhas.push('');
+  if (a.alertaManipulacao) {
+    linhas.push('> **Atenção, professor(a):** o texto do aluno contém instruções dirigidas à IA avaliadora. Os textos foram avaliados por heurísticas.');
+    linhas.push('');
+  }
   linhas.push('## Decisões');
   linhas.push('');
   if (d) {
