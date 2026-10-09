@@ -1,6 +1,6 @@
 # Astecca - Ambiente de Treinamento em Comunicação de Crise
 
-Extensão do Chrome para o ensino prático de Comunicação de Crise em Relações Públicas. Esse MVP foi desenvolvido como produto de TCC da Ana Caroliny Mendes Cavalcante, graduanda do curso de Relações Públicas da Universidade Federal de Alagoas (UFAL), sob orientação do Prof. André Lage Freitas.
+Extensão do Chrome para o ensino prático de Comunicação de Crise em Relações Públicas. Esse MVP foi desenvolvido como produto de TCC da Ana Caroliny Mendes Cavalcante ([ana.mendes@ichca.ufal.br](mailto:ana.mendes@ichca.ufal.br)), graduanda do curso de Relações Públicas da Universidade Federal de Alagoas (UFAL), sob orientação do Prof. André Lage Freitas ([andre.lage@ichca.ufal.br](mailto:andre.lage@ichca.ufal.br)).
 
 O aluno assume o papel de profissional de RP de uma empresa fictícia. A simulação passa por três fases: pré-crise, crise e pós-crise. Ao longo da crise, ele escolhe a estratégia de resposta (SCCT), o porta-voz e a forma de distribuição. Além disso, responde a jornalistas com prazo, redige o comunicado oficial e desmente boatos gerados por IA. No fim, recebe uma avaliação por critério, com a teoria que sustenta cada nota.
 
