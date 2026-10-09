@@ -11,7 +11,7 @@ Plano completo: [`docs/PLANO-MVP.md`](docs/PLANO-MVP.md). Base teórica: [`docs/
 1. Abra `chrome://extensions` no Chrome (versão 116 ou mais recente).
 2. Ative o **Modo do desenvolvedor**, no canto superior direito.
 3. Clique em **Carregar sem compactação** e selecione esta pasta (`astecca`).
-4. Fixe o ícone do Astecca na barra do Chrome e clique nele. O painel lateral abre.
+4. Fixe o ícone do Astecca na barra do Chrome e clique nele. O Astecca abre numa aba inteira. Se a aba já estiver aberta, o clique apenas volta para ela.
 
 Não há etapa de build. Dessa forma, qualquer alteração nos arquivos aparece ao recarregar a extensão em `chrome://extensions`.
 
@@ -19,18 +19,18 @@ Não há etapa de build. Dessa forma, qualquer alteração nos arquivos aparece 
 
 Sem IA, o Astecca funciona com reações prontas de cada cenário e avalia os textos por heurísticas simples. Com IA, as reações do público e a avaliação dos textos ficam mais ricas.
 
-Para ativar, abra **Configurações** no painel, informe uma chave da API da Anthropic e clique em **Testar conexão e listar modelos**. A chave fica guardada só no navegador do aluno. Para o teste piloto, o campo **Servidor intermediário** permite apontar para um servidor do projeto que guarde a chave, conforme a decisão D1 do plano.
+O Astecca aceita três provedores: **Claude** (Anthropic), **GPT** (OpenAI) e **Gemini** (Google AI Studio). Para ativar, abra **Configurações**, escolha o provedor, informe a chave da API e clique em **Testar conexão e listar modelos**. Em seguida, escolha o modelo e salve. Cada provedor guarda a sua própria chave, que fica só no navegador do aluno. Para o teste piloto, o campo **Servidor intermediário** permite apontar para um servidor do projeto que guarde a chave, conforme a decisão D1 do plano.
 
 ## Estrutura
 
 ```
 manifest.json            Manifest V3
-src/background.js        abre o painel lateral ao clicar no ícone
-src/sidepanel/           interface (HTML, CSS e JavaScript puro)
+src/background.js        abre o Astecca numa aba ao clicar no ícone
+src/app/                 interface (HTML, CSS e JavaScript puro)
 src/engine/              motor da simulação (funções puras) e catálogo de cenários
 src/scenarios/*.json     cenários editáveis pela equipe de conteúdo
 src/evaluation/          rubrica: regras fixas + heurísticas de texto
-src/llm/                 cliente da API e prompts
+src/llm/                 cliente dos provedores de IA (client.js) e prompts (prompts.js)
 src/report/              relatório em Markdown e página para impressão/PDF
 tests/                   testes automatizados (node:test)
 ```
@@ -59,4 +59,4 @@ npm test
 
 ## Privacidade
 
-Os dados do aluno ficam no `chrome.storage.local` do próprio navegador. Quando a IA está ativa, somente os textos da simulação vão para a API, sem o nome do aluno.
+Os dados do aluno ficam no `chrome.storage.local` do próprio navegador. Quando a IA está ativa, somente os textos da simulação vão para o provedor escolhido, sem o nome do aluno.

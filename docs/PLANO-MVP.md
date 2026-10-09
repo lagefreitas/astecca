@@ -14,7 +14,7 @@ O MVP valida uma hipótese: a simulação com feedback teórico ajuda o aluno a 
 
 ## 2. Por que uma extensão do Chrome
 
-- O aluno abre a simulação num painel lateral (*side panel*) sem sair do navegador.
+- O aluno abre a simulação numa aba inteira do Chrome com um clique no ícone da extensão. *(Revisão: a versão inicial usava o painel lateral; a aba inteira dá mais espaço para ler o feed e redigir o comunicado.)*
 - A extensão pode ler a página aberta. Por exemplo, o aluno seleciona uma notícia real e a ferramenta transforma o caso num cenário de treino. Isso atende à recomendação de Cheng et al. (2025) de analisar casos reais.
 - A distribuição é simples, pela Chrome Web Store, e não exige servidor próprio no MVP.
 
@@ -45,7 +45,7 @@ O MVP valida uma hipótese: a simulação com feedback teórico ajuda o aluno a 
 
 ## 4. Fluxo do aluno
 
-1. O aluno abre o painel lateral e escolhe um cenário.
+1. O aluno clica no ícone do Astecca, que abre numa aba inteira, e escolhe um cenário.
 2. **Pré-crise.** Ele recebe sinais fracos, como reclamações isoladas. Em seguida, decide se age preventivamente.
 3. **Crise.** O relógio acelera. Já nessa fase, chegam posts, boatos gerados por IA e perguntas de jornalistas. O aluno escolhe a estratégia, o porta-voz e a forma de distribuição. Além disso, redige o comunicado e responde aos jornalistas dentro do prazo.
 4. A cada decisão, o público simulado reage. Por exemplo, uma negação em crise evitável aumenta a indignação, enquanto um pedido de desculpas sincero melhora a credibilidade.
@@ -76,7 +76,7 @@ O feedback sempre cita a teoria que sustenta o comentário. Além disso, o relat
 - **Manifest V3**, exigido pela Chrome Web Store.
 - **JavaScript puro com módulos ES**, sem etapa de build. Dessa forma, a Ana Caroliny e outros colaboradores carregam a extensão direto da pasta, sem instalar Node ou dependências. *(Revisão: o plano original previa WXT + React + TypeScript. A troca reduz a complexidade do MVP e pode ser revista se a interface crescer.)*
 - **chrome.storage.local** para progresso e configurações. Os dados do aluno ficam no próprio navegador.
-- **API da Anthropic** (opcional) para gerar reações do público e avaliar textos. Sem IA, o MVP usa reações prontas e heurísticas.
+- **IA opcional, com três provedores:** Claude (Anthropic), GPT (OpenAI) e Gemini (Google). A IA gera reações do público e avalia textos. Sem IA, o MVP usa reações prontas e heurísticas.
 - **node:test** para os testes automatizados, sem dependências externas.
 
 ### 6.2 Componentes
@@ -87,8 +87,8 @@ astecca/
 ├── docs/                      # TCC, plano e base teórica
 ├── icons/
 ├── src/
-│   ├── background.js          # abre o painel lateral
-│   ├── sidepanel/             # interface da simulação
+│   ├── background.js          # abre o Astecca numa aba
+│   ├── app/                   # interface da simulação
 │   ├── engine/                # motor da simulação (funções puras) e catálogo
 │   ├── scenarios/             # cenários em JSON
 │   ├── evaluation/            # regras fixas + heurísticas da rubrica
@@ -102,7 +102,7 @@ astecca/
 
 O motor tem as fases `pre_crise → crise → pos_crise → debrief`. Cada cenário define uma linha do tempo de eventos (*injects*) com o segundo simulado em que aparecem. Por exemplo, "segundo 60: jornalista do Portal Conecta pede posicionamento em 5 minutos". Além disso, o motor registra cada decisão do aluno com o horário, o que alimenta a rubrica.
 
-O tempo simulado é calculado a partir do horário real em que a crise começou e da velocidade escolhida (1×, 2×, 5× ou 10×). Por isso, o relógio continua correto mesmo que o aluno feche e reabra o painel, sem depender do *service worker*.
+O tempo simulado é calculado a partir do horário real em que a crise começou e da velocidade escolhida (1×, 2×, 5× ou 10×). Por isso, o relógio continua correto mesmo que o aluno feche e reabra a aba, sem depender do *service worker*.
 
 ### 6.4 Formato do cenário
 
@@ -140,7 +140,7 @@ O cenário inicial adapta o caso do relógio fitness de Olbermann e Nagl (2025).
 
 | Etapa | Entregas | Esforço estimado |
 |---|---|---|
-| E0. Fundação | Repositório git + GitHub, projeto WXT, painel lateral "olá mundo", CI com lint e testes | 1–2 dias |
+| E0. Fundação | Repositório git + GitHub, projeto WXT, página "olá mundo", CI com lint e testes | 1–2 dias |
 | E1. Cenários e motor | Esquema JSON, 1 cenário completo, máquina de estados, relógio com `chrome.alarms`, testes do motor | 3–4 dias |
 | E2. Interface da simulação | Feed simulado, caixa de perguntas de jornalistas com contagem regressiva, editor de comunicado, escolha de estratégia, porta-voz e distribuição | 4–5 dias |
 | E3. LLM | Cliente da API, prompts de reação do público e de avaliação, validação de JSON, tratamento de erros e de falta de conexão | 3–4 dias |
@@ -176,5 +176,5 @@ Em todos os casos citados, a pesquisa com alunos pode exigir aprovação do Comi
 
 - **Custo e limite da API de LLM** durante o teste piloto. Por isso, o servidor intermediário deve limitar chamadas por aluno.
 - **Avaliação inconsistente do LLM.** Dessa forma, critérios objetivos ficam em regras fixas, e o LLM recebe exemplos de respostas boas e ruins.
-- **Fechamento do painel durante a simulação.** Por isso, o estado é salvo no `chrome.storage` a cada ação, e o relógio é recalculado pelo horário real.
+- **Fechamento da aba durante a simulação.** Por isso, o estado é salvo no `chrome.storage` a cada ação, e o relógio é recalculado pelo horário real.
 - **Repositório git dentro do iCloud.** Por isso, o histórico do git fica em `.git.nosync`.

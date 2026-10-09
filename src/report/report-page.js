@@ -12,7 +12,7 @@ async function iniciar() {
   const config = (await carregar(CHAVE_CONFIG)) || {};
   const s = salvo?.sessao;
   if (!s?.avaliacao) {
-    raiz.replaceChildren(h('p', {}, 'Nenhum relatório disponível. Conclua uma simulação no painel do Astecca.'));
+    raiz.replaceChildren(h('p', {}, 'Nenhum relatório disponível. Conclua uma simulação no Astecca.'));
     return;
   }
   const c = await carregarCenario(s.cenarioId);

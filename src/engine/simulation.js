@@ -1,6 +1,6 @@
 // Motor da simulação: funções puras que recebem o estado e devolvem um novo estado.
 // O tempo simulado é derivado do relógio real (Date.now) e da velocidade escolhida.
-// Dessa forma, o relógio continua correto mesmo que o painel seja fechado e reaberto.
+// Dessa forma, o relógio continua correto mesmo que a aba seja fechada e reaberta.
 
 import { PRORROGACAO_S } from './constants.js';
 

@@ -228,3 +228,34 @@ details ul { margin: 0 0 12px; padding-left: 18px; font-size: 13px; color: var(-
 @media (prefers-reduced-motion: reduce) { .giro { animation-duration: 3s; } * { transition: none !important; } }
 
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+/* Aba inteira: a aplicação ocupa uma coluna centralizada. O feed usa duas colunas em telas largas. */
+.tela { width: 100%; max-width: 760px; margin: 0 auto; }
+.tela.larga { max-width: 1120px; }
+.colunas { display: grid; gap: 16px; }
+.coluna-lateral { display: flex; flex-direction: column; gap: 16px; }
+
+@media (min-width: 761px) {
+  body { background: var(--neutro); }
+  .tela { background: var(--fundo); border-left: 1px solid var(--linha); border-right: 1px solid var(--linha); }
+  .principal { padding: 24px 32px 32px; gap: 20px; }
+  .topo { padding: 14px 32px; }
+  .banner, .status-faixa, .prazo { padding-left: 32px; padding-right: 32px; }
+  .erro { margin: 0 32px; }
+  h1 { font-size: 30px; }
+  .rodape { padding: 14px 32px; flex-direction: row; justify-content: flex-end; align-items: center; gap: 12px; }
+  .rodape > .botao { min-width: 280px; }
+  .rodape > .botao.primario { order: 2; }
+  .rodape > .grade-2 { display: flex; gap: 8px; }
+  .rodape > .grade-2 .botao { min-width: 180px; }
+  .rodape > span { margin-right: auto; text-align: left !important; }
+  textarea { min-height: 260px; }
+  textarea.curto { min-height: 140px; }
+  .bloco[role="group"] { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+  .grade-opcoes { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+
+@media (min-width: 1000px) {
+  .colunas { grid-template-columns: 340px minmax(0, 1fr); align-items: start; }
+  .coluna-lateral { position: sticky; top: 132px; }
+}

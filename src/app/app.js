@@ -1,5 +1,5 @@
-// Interface do painel lateral. Cada tela é uma função que devolve um elemento.
-// O estado da sessão é salvo a cada ação. Dessa forma, o aluno pode fechar o painel e voltar depois.
+// Interface do Astecca, aberta numa aba inteira do Chrome. Cada tela é uma função que devolve um elemento.
+// O estado da sessão é salvo a cada ação. Dessa forma, o aluno pode fechar a aba e voltar depois.
 
 import { h, icone } from '../lib/dom.js';
 import { carregar, salvar, CHAVE_SESSAO, CHAVE_CONFIG } from '../lib/storage.js';
@@ -7,11 +7,11 @@ import { carregarCatalogo } from '../engine/scenarios.js';
 import * as sim from '../engine/simulation.js';
 import { CLUSTERS, ESTRATEGIAS, PORTA_VOZES, DISTRIBUICOES, NOMES_FASES, FASES } from '../engine/constants.js';
 import { montarAvaliacao, linhaDoTempo } from '../evaluation/rubric.js';
-import { iaConfigurada, listarModelos } from '../llm/client.js';
+import { iaConfigurada, listarModelos, normalizarConfig, sugerirModelo, PROVEDORES } from '../llm/client.js';
 import { avaliarComIA, gerarReacoesComIA } from '../llm/prompts.js';
 import { gerarMarkdown } from '../report/report.js';
 
-const CONFIG_PADRAO = { chave: '', urlBase: '', modelo: '', velocidade: 1, aluno: '', dicas: true };
+const CONFIG_PADRAO = { provedor: 'anthropic', chaves: { anthropic: '', openai: '', gemini: '' }, urlBase: '', modelo: '', velocidade: 1, aluno: '', dicas: true };
 const LIMITE_RESPOSTA = 600;
 const LIMITE_COMUNICADO = 1500;
 
@@ -30,6 +30,7 @@ const app = {
   erroIA: null,
   ocupado: null,
   modelos: [],
+  statusConfig: '',
   assinatura: ''
 };
 
@@ -397,7 +398,7 @@ function telaFeed() {
       h('button', { class: 'botao primario', disabled: !s.decisoes, onclick: () => ir('comunicado') }, 'Redigir comunicado'));
   }
 
-  return h('div', { class: 'tela' },
+  return h('div', { class: 'tela larga' },
     topoSimulacao(),
     bannersJornalistas(),
     s.comunicado && h('div', { class: 'status-faixa', role: 'status' }, icone('ok', 'icone'), `Comunicado publicado em ${textoTempo(s.comunicado.tSim)}`),
@@ -408,17 +409,19 @@ function telaFeed() {
       tempoEsgotado && h('div', { class: 'aviso alerta', role: 'alert' }, icone('alerta', 'icone'),
         h('div', { class: 'corpo' }, 'O pico da crise passou sem comunicado oficial. Você pode publicar agora ou avançar para a pós-crise.'),
         h('button', { class: 'link', onclick: () => executar((x) => sim.encerrarCrise(cenario, x, agora()), () => ir('pos_crise')) }, 'Avançar')),
-      s.comunicado ? comparacaoClima() : climaAtual(),
-      s.comunicado && h('section', { class: 'bloco' },
-        h('h2', {}, 'O que estão dizendo'),
-        app.ocupado === 'reacoes'
-          ? telaCarregando('Gerando reações do público…')
-          : (s.reacoes?.posts || []).map((p) => h('article', { class: 'post' },
-            h('div', { class: 'meta' }, h('span', {}, h('strong', {}, p.autor), ` · ${p.perfil}`), h('span', { class: 'etiqueta' }, 'Reação')),
-            h('p', {}, p.texto)))),
-      h('section', { class: 'bloco', 'aria-live': 'polite' },
-        h('h2', {}, 'Feed simulado'),
-        eventos.length ? eventos.map(cartaoEvento) : h('p', { class: 'vazio' }, 'Nada por enquanto.'))),
+      h('div', { class: 'colunas' },
+        h('aside', { class: 'coluna-lateral' },
+          s.comunicado ? comparacaoClima() : h('div', { class: 'cartao' }, climaAtual()),
+          s.comunicado && h('section', { class: 'bloco' },
+            h('h2', {}, 'O que estão dizendo'),
+            app.ocupado === 'reacoes'
+              ? telaCarregando('Gerando reações do público…')
+              : (s.reacoes?.posts || []).map((p) => h('article', { class: 'post' },
+                h('div', { class: 'meta' }, h('span', {}, h('strong', {}, p.autor), ` · ${p.perfil}`), h('span', { class: 'etiqueta' }, 'Reação')),
+                h('p', {}, p.texto))))),
+        h('section', { class: 'bloco coluna-feed', 'aria-live': 'polite' },
+          h('h2', {}, 'Feed simulado'),
+          eventos.length ? eventos.map(cartaoEvento) : h('p', { class: 'vazio' }, 'Nada por enquanto.')))),
     caixaErro(),
     rodape(acoes));
 }
@@ -612,27 +615,34 @@ function telaDebrief() {
 
 function telaConfig() {
   const c = app.config;
-  const form = { ...c };
-  let status = null;
-  const statusEl = h('p', { class: 'ajuda', 'aria-live': 'polite' });
+  const form = { ...c, chaves: { ...c.chaves } };
+  const statusEl = h('p', { class: 'ajuda', 'data-status-config': '', 'aria-live': 'polite' }, app.statusConfig || '');
+  const provedor = PROVEDORES[form.provedor];
   const seletor = h('select', { id: 'modelo', onchange: (e) => { form.modelo = e.target.value; } },
     h('option', { value: '' }, '— escolha após testar a conexão —'),
     app.modelos.map((m) => h('option', { value: m.id }, m.nome)),
     c.modelo && !app.modelos.some((m) => m.id === c.modelo) && h('option', { value: c.modelo }, c.modelo));
   seletor.value = c.modelo || '';
 
+  function trocarProvedor(novo) {
+    if (novo === form.provedor) return;
+    // cada provedor tem modelos e URL próprios; a chave de cada um fica guardada
+    app.config = { ...form, provedor: novo, modelo: '', urlBase: '' };
+    app.modelos = [];
+    app.statusConfig = '';
+    render();
+  }
+
   async function testar() {
     statusEl.textContent = 'Testando…';
     try {
       app.modelos = await listarModelos(form);
-      status = `Conexão ok. ${app.modelos.length} modelos disponíveis.`;
-      if (!form.modelo) {
-        const sugerido = app.modelos.find((m) => /sonnet/i.test(m.id)) || app.modelos[0];
-        form.modelo = sugerido?.id || '';
-      }
+      if (!app.modelos.length) throw new Error('Nenhum modelo de texto disponível para esta chave.');
+      if (!form.modelo || !app.modelos.some((m) => m.id === form.modelo)) form.modelo = sugerirModelo(form, app.modelos);
+      const n = app.modelos.length;
+      app.statusConfig = `Conexão ok. ${n} ${n > 1 ? 'modelos disponíveis' : 'modelo disponível'}.`;
       app.config = { ...form };
       render();
-      document.querySelector('[data-status-config]').textContent = status;
     } catch (e) {
       statusEl.textContent = e.message;
     }
@@ -640,7 +650,7 @@ function telaConfig() {
 
   return h('div', { class: 'tela' },
     h('header', { class: 'topo topo-sub' },
-      h('button', { class: 'botao-icone', 'aria-label': 'Voltar', onclick: () => ir('inicio') }, icone('voltar')),
+      h('button', { class: 'botao-icone', 'aria-label': 'Voltar', onclick: () => { app.statusConfig = ''; ir('inicio'); } }, icone('voltar')),
       h('div', { class: 'identificacao' }, h('strong', {}, 'Configurações'), h('span', {}, 'Salvas apenas neste navegador'))),
     h('main', { class: 'principal' },
       h('div', { class: 'campo' },
@@ -656,21 +666,27 @@ function telaConfig() {
         'Mostrar dicas (modo iniciante)'),
       h('h2', {}, 'Inteligência artificial (opcional)'),
       h('p', { class: 'texto-2' }, 'Com IA, as reações do público e a avaliação dos textos ficam mais ricas. Sem IA, o Astecca usa reações prontas e heurísticas.'),
+      h('fieldset', {},
+        h('legend', {}, 'Provedor'),
+        h('div', { class: 'grade-opcoes tres' },
+          Object.entries(PROVEDORES).map(([id, p]) => h('label', { class: 'opcao' },
+            h('input', { type: 'radio', name: 'provedor', value: id, checked: form.provedor === id, onchange: () => trocarProvedor(id) }),
+            p.nome)))),
       h('div', { class: 'campo' },
-        h('label', { for: 'chave' }, 'Chave da API da Anthropic'),
-        h('input', { id: 'chave', type: 'password', autocomplete: 'off', value: c.chave, oninput: (e) => { form.chave = e.target.value.trim(); } }),
-        h('span', { class: 'ajuda' }, 'A chave fica guardada só neste navegador. Os textos da simulação são enviados à API, sem o seu nome.')),
+        h('label', { for: 'chave' }, provedor.rotuloChave),
+        h('input', { id: 'chave', type: 'password', autocomplete: 'off', value: form.chaves[form.provedor], oninput: (e) => { form.chaves[form.provedor] = e.target.value.trim(); } }),
+        h('span', { class: 'ajuda' }, 'A chave fica guardada só neste navegador. Os textos da simulação são enviados ao provedor escolhido, sem o seu nome.')),
       h('div', { class: 'campo' },
         h('label', { for: 'urlBase' }, 'Servidor intermediário (opcional)'),
-        h('input', { id: 'urlBase', type: 'url', placeholder: 'https://api.anthropic.com', value: c.urlBase, oninput: (e) => { form.urlBase = e.target.value.trim(); } })),
+        h('input', { id: 'urlBase', type: 'url', placeholder: provedor.urlPadrao, value: form.urlBase, oninput: (e) => { form.urlBase = e.target.value.trim(); } })),
       h('button', { class: 'botao terciario', onclick: testar }, 'Testar conexão e listar modelos'),
-      h('p', { class: 'ajuda', 'data-status-config': '' }),
       statusEl,
       h('div', { class: 'campo' }, h('label', { for: 'modelo' }, 'Modelo'), seletor)),
     rodape(h('button', {
       class: 'botao primario',
       onclick: async () => {
-        app.config = { ...CONFIG_PADRAO, ...form };
+        app.config = normalizarConfig({ ...CONFIG_PADRAO, ...form });
+        app.statusConfig = '';
         await salvar(CHAVE_CONFIG, app.config);
         ir('inicio');
       }
@@ -756,7 +772,7 @@ async function iniciar() {
     raiz.replaceChildren(h('div', { class: 'aviso alerta', role: 'alert', style: 'margin:20px' }, e.message));
     return;
   }
-  app.config = { ...CONFIG_PADRAO, ...(await carregar(CHAVE_CONFIG)) };
+  app.config = normalizarConfig({ ...CONFIG_PADRAO, ...(await carregar(CHAVE_CONFIG)) });
   const salvo = await carregar(CHAVE_SESSAO);
   if (salvo?.sessao) {
     const cenario = app.catalogo.find((c) => c.id === salvo.sessao.cenarioId);
