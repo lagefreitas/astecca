@@ -1,0 +1,57 @@
+{
+  "id": "boato-ia",
+  "titulo": "Boato gerado por IA sobre a marca",
+  "resumo": "Um vídeo sintético afirma que os iogurtes da Sabor do Vale estão contaminados.",
+  "cluster_scct": "vitima",
+  "dificuldade": "Fácil",
+  "duracao_min": 15,
+  "rascunho": true,
+  "empresa": {
+    "nome": "Sabor do Vale",
+    "setor": "laticínios",
+    "descricao": "Cooperativa de laticínios de Alagoas, com produtos em supermercados de todo o Nordeste."
+  },
+  "papel": "Você é o assessor de Relações Públicas da Sabor do Vale, cooperativa de laticínios de Alagoas.",
+  "fatos": [
+    "O vídeo mostra uma suposta funcionária dizendo que os iogurtes estão contaminados. Ela não trabalha na cooperativa.",
+    "A análise de uma perícia digital indica que o rosto e a voz foram gerados por IA.",
+    "O último laudo da vigilância sanitária, de setembro, aprovou todos os lotes.",
+    "O consumidor pode conferir o lote no site da cooperativa, em Qualidade › Consulta de lote."
+  ],
+  "sentimento_inicial": 25,
+  "pre_crise": {
+    "sinais": [
+      { "icone": "forum", "texto": "Um grupo de mensagens local repassa um vídeo com \"denúncia\" sobre os iogurtes." },
+      { "icone": "grafico", "texto": "Buscas por \"Sabor do Vale contaminado\" subiram 900% em uma hora." },
+      { "icone": "email", "texto": "Um supermercado parceiro pergunta se deve retirar os produtos das prateleiras." }
+    ],
+    "opcoes": [
+      { "id": "monitorar", "texto": "Ignorar: é só um boato", "efeito_sentimento": 12, "feedback": "Boatos com vídeo sintético costumam crescer rápido. Ignorar deixa o espaço livre para a desinformação." },
+      { "id": "comite", "texto": "Reunir o comitê e pedir perícia do vídeo", "efeito_sentimento": 0, "feedback": "Reunir provas antes de responder fortalece o desmentido." },
+      { "id": "preventivo", "texto": "Publicar desmentido imediato sem provas", "efeito_sentimento": 4, "feedback": "Desmentir sem provas pode soar como negação defensiva." }
+    ],
+    "opcao_recomendada": "comite"
+  },
+  "estrategias_adequadas": ["negar"],
+  "estrategias_aceitaveis": ["reforcar"],
+  "porta_voz": { "recomendado": ["rp", "ceo"], "aceitavel": [] },
+  "tempo_ideal_s": 600,
+  "encerramento_s": 1200,
+  "eventos": [
+    { "id": "e1", "t": 0, "tipo": "boato", "autor": "@saude_ja", "perfil": "Perfil anônimo", "texto": "URGENTE: funcionária da Sabor do Vale revela que os iogurtes estão contaminados. Não deem às crianças!", "alcance": "Vídeo sintético · 6 mil compartilhamentos", "impacto": 15 },
+    { "id": "e2", "t": 120, "tipo": "jornalista", "autor": "Renato Lima", "perfil": "Repórter · Gazeta de Alagoas Online", "texto": "Vocês confirmam a contaminação mostrada no vídeo? Algum lote será recolhido?", "prazo_s": 300, "impacto": 8 },
+    { "id": "e3", "t": 360, "tipo": "post", "autor": "@mae.do.theo", "perfil": "Consumidora", "texto": "Joguei fora todos os iogurtes da geladeira. A marca não fala nada?", "impacto": 6 }
+  ],
+  "reacoes": {
+    "boa": [
+      { "autor": "@mae.do.theo", "perfil": "Consumidora", "texto": "Conferi o lote no site. Ainda bem que mostraram o laudo." },
+      { "autor": "@checagem_nordeste", "perfil": "Agência de checagem", "texto": "Confirmamos: o vídeo foi gerado por IA. A cooperativa apresentou laudo sanitário." }
+    ],
+    "mista": [
+      { "autor": "@mae.do.theo", "perfil": "Consumidora", "texto": "Dizem que é falso, mas não mostraram nenhuma prova." }
+    ],
+    "ruim": [
+      { "autor": "@mae.do.theo", "perfil": "Consumidora", "texto": "Se não fosse verdade, já teriam desmentido. Não compro mais." }
+    ]
+  }
+}

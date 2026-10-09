@@ -1,0 +1,11 @@
+{
+  "name": "astecca",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Extensão do Chrome para o ensino prático de Comunicação de Crise em Relações Públicas.",
+  "type": "module",
+  "scripts": {
+    "test": "node --test tests/*.test.js"
+  },
+  "license": "UNLICENSED"
+}

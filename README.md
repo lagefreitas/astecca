@@ -1,0 +1,62 @@
+# Astecca
+
+Extensão do Chrome para o ensino prático de Comunicação de Crise em Relações Públicas. MVP do TCC de Ana Caroliny (UFAL).
+
+O aluno assume o papel de profissional de RP de uma empresa fictícia. A simulação passa por três fases: pré-crise, crise e pós-crise. Ao longo da crise, ele escolhe a estratégia de resposta (SCCT), o porta-voz e a forma de distribuição. Além disso, responde a jornalistas com prazo, redige o comunicado oficial e desmente boatos gerados por IA. No fim, recebe uma avaliação por critério, com a teoria que sustenta cada nota.
+
+Plano completo: [`docs/PLANO-MVP.md`](docs/PLANO-MVP.md). Base teórica: [`docs/resumo-3-artigos-selecionados.md`](docs/resumo-3-artigos-selecionados.md).
+
+## Como instalar (modo desenvolvedor)
+
+1. Abra `chrome://extensions` no Chrome (versão 116 ou mais recente).
+2. Ative o **Modo do desenvolvedor**, no canto superior direito.
+3. Clique em **Carregar sem compactação** e selecione esta pasta (`astecca`).
+4. Fixe o ícone do Astecca na barra do Chrome e clique nele. O painel lateral abre.
+
+Não há etapa de build. Dessa forma, qualquer alteração nos arquivos aparece ao recarregar a extensão em `chrome://extensions`.
+
+## Inteligência artificial (opcional)
+
+Sem IA, o Astecca funciona com reações prontas de cada cenário e avalia os textos por heurísticas simples. Com IA, as reações do público e a avaliação dos textos ficam mais ricas.
+
+Para ativar, abra **Configurações** no painel, informe uma chave da API da Anthropic e clique em **Testar conexão e listar modelos**. A chave fica guardada só no navegador do aluno. Para o teste piloto, o campo **Servidor intermediário** permite apontar para um servidor do projeto que guarde a chave, conforme a decisão D1 do plano.
+
+## Estrutura
+
+```
+manifest.json            Manifest V3
+src/background.js        abre o painel lateral ao clicar no ícone
+src/sidepanel/           interface (HTML, CSS e JavaScript puro)
+src/engine/              motor da simulação (funções puras) e catálogo de cenários
+src/scenarios/*.json     cenários editáveis pela equipe de conteúdo
+src/evaluation/          rubrica: regras fixas + heurísticas de texto
+src/llm/                 cliente da API e prompts
+src/report/              relatório em Markdown e página para impressão/PDF
+tests/                   testes automatizados (node:test)
+```
+
+## Como editar um cenário
+
+Cada cenário é um arquivo JSON em `src/scenarios/`. Os campos principais são:
+
+- `cluster_scct`: `vitima`, `acidental` ou `evitavel`.
+- `estrategias_adequadas` e `estrategias_aceitaveis`: entre `negar`, `diminuir`, `reconstruir` e `reforcar`.
+- `porta_voz.recomendado` e `porta_voz.aceitavel`: entre `ceo`, `rp` e `influenciador`.
+- `eventos`: posts, matérias, boatos e perguntas de jornalistas. O campo `t` é o segundo simulado em que o evento aparece, e `prazo_s` é o prazo do jornalista.
+- `reacoes`: posts usados no modo sem IA, conforme o desfecho (`boa`, `mista` ou `ruim`).
+
+Para incluir um cenário novo, crie o arquivo e acrescente o `id` em `CATALOGO`, no arquivo `src/engine/scenarios.js`. Os testes verificam se todos os cenários são válidos.
+
+Os cenários "Falha no sistema de pagamentos" e "Boato gerado por IA sobre a marca" estão marcados como rascunho, e precisam de revisão de conteúdo.
+
+## Testes
+
+Requer Node.js 18 ou mais recente.
+
+```
+npm test
+```
+
+## Privacidade
+
+Os dados do aluno ficam no `chrome.storage.local` do próprio navegador. Quando a IA está ativa, somente os textos da simulação vão para a API, sem o nome do aluno.

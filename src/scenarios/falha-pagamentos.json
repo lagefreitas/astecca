@@ -1,0 +1,58 @@
+{
+  "id": "falha-pagamentos",
+  "titulo": "Falha no sistema de pagamentos",
+  "resumo": "Uma pane no fornecedor de processamento deixa clientes da Carteira Viva sem pagar contas no dia do salário.",
+  "cluster_scct": "acidental",
+  "dificuldade": "Médio",
+  "duracao_min": 15,
+  "rascunho": true,
+  "empresa": {
+    "nome": "Carteira Viva",
+    "setor": "carteira digital",
+    "descricao": "Carteira digital com 600 mil clientes, muito usada por trabalhadores autônomos."
+  },
+  "papel": "Você é a coordenadora de Relações Públicas da Carteira Viva, carteira digital com 600 mil clientes no Nordeste.",
+  "fatos": [
+    "Às 8h do dia 5, o fornecedor de processamento de pagamentos teve uma pane técnica.",
+    "Pix e pagamento de boletos estão fora do ar. O saldo dos clientes está seguro.",
+    "A equipe técnica estima normalização em até 4 horas.",
+    "Clientes com boletos vencendo hoje podem pedir reembolso de multa pelo app, em Ajuda › Reembolso de multa."
+  ],
+  "sentimento_inicial": 30,
+  "pre_crise": {
+    "sinais": [
+      { "icone": "grafico", "texto": "O tempo de resposta do Pix subiu 400% nos últimos 15 minutos." },
+      { "icone": "email", "texto": "O fornecedor de processamento informa \"instabilidade em análise\"." },
+      { "icone": "forum", "texto": "Três reclamações no app: \"Pix não sai\"." }
+    ],
+    "opcoes": [
+      { "id": "monitorar", "texto": "Esperar o fornecedor resolver", "efeito_sentimento": 10, "feedback": "Esperar deixa os clientes descobrirem o problema sozinhos, no dia em que mais precisam do app." },
+      { "id": "comite", "texto": "Acionar o comitê e preparar aviso no app", "efeito_sentimento": 0, "feedback": "Preparar o aviso cedo reduz a incerteza quando o problema se espalhar." },
+      { "id": "preventivo", "texto": "Publicar aviso de instabilidade agora", "efeito_sentimento": 2, "feedback": "Avisar cedo é razoável. Porém, sem saber a causa, o aviso precisa ser cuidadoso." }
+    ],
+    "opcao_recomendada": "comite"
+  },
+  "estrategias_adequadas": ["diminuir"],
+  "estrategias_aceitaveis": ["reconstruir"],
+  "porta_voz": { "recomendado": ["rp", "ceo"], "aceitavel": [] },
+  "tempo_ideal_s": 600,
+  "encerramento_s": 1200,
+  "eventos": [
+    { "id": "e1", "t": 0, "tipo": "post", "autor": "@joao.entregas", "perfil": "Cliente", "texto": "Dia do pagamento e a Carteira Viva não deixa eu pagar o aluguel. Alguém mais?", "alcance": "900 compartilhamentos", "impacto": 12 },
+    { "id": "e2", "t": 90, "tipo": "jornalista", "autor": "Paula Nunes", "perfil": "Repórter · Rádio Mar Azul", "texto": "Estamos ao vivo daqui a pouco. O que aconteceu com o sistema e quando volta a funcionar?", "prazo_s": 240, "impacto": 8 },
+    { "id": "e3", "t": 240, "tipo": "boato", "autor": "@alerta_golpe", "perfil": "Perfil anônimo", "texto": "A Carteira Viva foi hackeada e estão esvaziando as contas. Tirem seu dinheiro AGORA!", "alcance": "Imagem manipulada · 3 mil compartilhamentos", "impacto": 14 },
+    { "id": "e4", "t": 420, "tipo": "post", "autor": "@marta.costura", "perfil": "Cliente", "texto": "Meu boleto vence hoje. Quem vai pagar a multa?", "impacto": 5 }
+  ],
+  "reacoes": {
+    "boa": [
+      { "autor": "@joao.entregas", "perfil": "Cliente", "texto": "Explicaram o que houve e que o dinheiro está seguro. Vou esperar." },
+      { "autor": "@marta.costura", "perfil": "Cliente", "texto": "Consegui pedir o reembolso da multa pelo app." }
+    ],
+    "mista": [
+      { "autor": "@joao.entregas", "perfil": "Cliente", "texto": "Tá, foi o fornecedor. Mas e a minha multa?" }
+    ],
+    "ruim": [
+      { "autor": "@joao.entregas", "perfil": "Cliente", "texto": "Jogaram a culpa no fornecedor e sumiram. Vou trocar de banco." }
+    ]
+  }
+}

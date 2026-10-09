@@ -1,0 +1,62 @@
+{
+  "id": "vazamento-dados-smartwatch",
+  "titulo": "Vazamento de dados de relógio fitness",
+  "resumo": "A Pulso Tech compartilhou dados de saúde de usuários com um parceiro sem consentimento claro.",
+  "cluster_scct": "evitavel",
+  "dificuldade": "Difícil",
+  "duracao_min": 20,
+  "rascunho": false,
+  "empresa": {
+    "nome": "Pulso Tech",
+    "setor": "relógios fitness",
+    "descricao": "Fabricante brasileira de relógios fitness com 2 milhões de usuários."
+  },
+  "papel": "Você é o gerente de Relações Públicas da Pulso Tech, fabricante de relógios fitness. A empresa tem 2 milhões de usuários no Brasil.",
+  "fatos": [
+    "Desde março, dados de frequência cardíaca de cerca de 180 mil usuários foram enviados à operadora de saúde VidaPlena.",
+    "O envio estava previsto em um contrato de pesquisa, mas o aviso aos usuários era genérico e ficava no item 14 dos termos de uso.",
+    "O usuário pode apagar o histórico em Configurações › Privacidade › Apagar dados de saúde.",
+    "O jurídico recomenda suspender o compartilhamento imediatamente."
+  ],
+  "sentimento_inicial": 35,
+  "pre_crise": {
+    "sinais": [
+      { "icone": "forum", "texto": "Fórum de usuários: \"Recebi anúncio de plano de saúde logo depois de sincronizar o relógio. Coincidência?\"" },
+      { "icone": "email", "texto": "E-mail interno do jurídico: contrato com parceiro de dados será revisado." },
+      { "icone": "grafico", "texto": "Menções à marca subiram 35% em 2 horas." }
+    ],
+    "opcoes": [
+      { "id": "monitorar", "texto": "Apenas monitorar", "efeito_sentimento": 10, "feedback": "Monitorar sem preparar uma resposta deixa a empresa sem posição quando a imprensa ligar." },
+      { "id": "comite", "texto": "Reunir o comitê de crise", "efeito_sentimento": 0, "feedback": "Reunir o comitê cedo permite levantar os fatos antes da exposição pública." },
+      { "id": "preventivo", "texto": "Publicar esclarecimento preventivo", "efeito_sentimento": 5, "feedback": "Publicar antes de apurar os fatos pode gerar um esclarecimento incompleto." }
+    ],
+    "opcao_recomendada": "comite"
+  },
+  "estrategias_adequadas": ["reconstruir"],
+  "estrategias_aceitaveis": ["diminuir"],
+  "porta_voz": { "recomendado": ["ceo"], "aceitavel": ["rp"] },
+  "tempo_ideal_s": 900,
+  "encerramento_s": 1500,
+  "eventos": [
+    { "id": "e1", "t": 0, "tipo": "imprensa", "autor": "@portalconecta", "perfil": "Imprensa", "texto": "EXCLUSIVO: Pulso Tech repassou dados de batimentos de usuários a operadora de planos de saúde.", "alcance": "1,8 mil compartilhamentos", "impacto": 15 },
+    { "id": "e2", "t": 60, "tipo": "jornalista", "autor": "Marina Rocha", "perfil": "Repórter · Portal Conecta", "texto": "A Pulso Tech confirma que compartilhou dados de frequência cardíaca com a operadora? Quantos usuários foram afetados e o que a empresa vai fazer?", "prazo_s": 300, "impacto": 8 },
+    { "id": "e3", "t": 180, "tipo": "post", "autor": "@ana.corre", "perfil": "Usuária", "texto": "Uso o relógio há 3 anos. Alguém sabe como apagar meus dados? A empresa não diz nada.", "impacto": 4 },
+    { "id": "e4", "t": 300, "tipo": "boato", "autor": "@verdade_ja", "perfil": "Perfil anônimo", "texto": "Áudio vazado do CEO: \"os usuários nem leem os termos\". Compartilhe antes que apaguem!", "alcance": "Áudio sintético · 4,1 mil compartilhamentos", "impacto": 12 },
+    { "id": "e5", "t": 540, "tipo": "jornalista", "autor": "Diego Alves", "perfil": "Produtor · TV Litoral", "texto": "Vamos exibir a matéria no jornal da noite. O CEO pode gravar uma declaração? Se não, a empresa envia uma nota?", "prazo_s": 420, "impacto": 8 },
+    { "id": "e6", "t": 720, "tipo": "post", "autor": "@consumidor_alerta", "perfil": "Defesa do consumidor", "texto": "Já há base para denúncia ao órgão de proteção de dados. Aguardamos posicionamento da Pulso Tech.", "impacto": 6 }
+  ],
+  "reacoes": {
+    "boa": [
+      { "autor": "@ana.corre", "perfil": "Usuária", "texto": "Pelo menos admitiram e explicaram como apagar os dados. Já fiz." },
+      { "autor": "@consumidor_alerta", "perfil": "Defesa do consumidor", "texto": "O pedido de desculpas é um começo. Vamos acompanhar se o compartilhamento foi mesmo suspenso." }
+    ],
+    "mista": [
+      { "autor": "@ana.corre", "perfil": "Usuária", "texto": "A nota é vaga. Fui afetada ou não?" },
+      { "autor": "@tec_critico", "perfil": "Influenciador de tecnologia", "texto": "Texto bonito, mas cadê a explicação de quantas pessoas foram afetadas?" }
+    ],
+    "ruim": [
+      { "autor": "@ana.corre", "perfil": "Usuária", "texto": "Negar com print do contrato circulando? Vou devolver o relógio." },
+      { "autor": "@portalconecta", "perfil": "Imprensa", "texto": "Documentos contradizem a versão oficial da Pulso Tech." }
+    ]
+  }
+}
